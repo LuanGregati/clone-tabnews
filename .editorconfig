@@ -1,0 +1,8 @@
+# Define que esse é o arquivo raiz, cujas configurações vão ser aplicadas
+# a todos os arquivos de níveis inferiores, a não ser que este níveis
+# tenham seus próprios ".editorconfig"
+root = true
+
+[*] # Todos os arquivos
+indent_style = space
+indent_size = 2
