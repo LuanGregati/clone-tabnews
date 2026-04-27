@@ -1,10 +1,10 @@
 import database from "infra/database.js";
+import orchestrator from "tests/orchestrator.js";
 
-beforeAll(cleanDatabase);
-
-async function cleanDatabase() {
+beforeAll(async () => {
+  await orchestrator.waitForAllServices();
   await database.query("drop schema public cascade; create schema public;");
-}
+});
 
 test("POST to /api/v1/migrations should return 200", async () => {
   /* VERIFICA SE HÁ MIGRATIONS PENDENTES */
@@ -12,7 +12,6 @@ test("POST to /api/v1/migrations should return 200", async () => {
     method: "POST",
   });
   expect(response1.status).toBe(201);
-  console.log("teste");
 
   const response1Body = await response1.json();
 
