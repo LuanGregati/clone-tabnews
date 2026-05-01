@@ -1,0 +1,5 @@
+# Executado ao realizar um commit com uma mensagem
+# --edit espera como parâmetro a mensagem do commit
+# $1 é a mensagem do commit em si. No caso, vai ser inserido ali o caminho para o arquivo que contém a mensagem do commit
+
+npx commitlint --edit $1
