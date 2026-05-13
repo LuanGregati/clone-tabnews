@@ -1,20 +1,24 @@
 import useSWR from "swr";
 
 export default function StatusPage() {
+  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
+    refreshInterval: 2000,
+  });
+
   return (
     <>
       <h1>Status</h1>
-      <UpdatedAt />
+      <UpdatedAt isLoading={isLoading} data={data} />
       <h2>Banco de dados</h2>
       <ul>
         <li>
-          <DatabaseVersion />
+          <DatabaseVersion isLoading={isLoading} data={data} />
         </li>
         <li>
-          <DatabaseOpenedConnections />
+          <DatabaseOpenedConnections isLoading={isLoading} data={data} />
         </li>
         <li>
-          <DatabaseMaxConnections />
+          <DatabaseMaxConnections isLoading={isLoading} data={data} />
         </li>
       </ul>
     </>
@@ -27,11 +31,7 @@ async function fetchAPI(key) {
   return responseBody;
 }
 
-function UpdatedAt() {
-  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
-    refreshInterval: 2000,
-  });
-
+function UpdatedAt({ isLoading, data }) {
   const UpdatedAtText = isLoading
     ? "Carregando..."
     : new Date(data.updated_at).toLocaleString("pt-BR");
@@ -39,11 +39,7 @@ function UpdatedAt() {
   return <div>Última atualização: {UpdatedAtText}</div>;
 }
 
-function DatabaseVersion() {
-  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
-    refreshInterval: 2000,
-  });
-
+function DatabaseVersion({ isLoading, data }) {
   const databaseVersionText = isLoading
     ? "Carregando..."
     : data.dependencies.database.version;
@@ -51,11 +47,7 @@ function DatabaseVersion() {
   return <div>Versão do Postgres: {databaseVersionText}</div>;
 }
 
-function DatabaseOpenedConnections() {
-  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
-    refreshInterval: 2000,
-  });
-
+function DatabaseOpenedConnections({ isLoading, data }) {
   const databaseOpenedConnectionsText = isLoading
     ? "Carregando..."
     : data.dependencies.database.opened_connections;
@@ -63,11 +55,7 @@ function DatabaseOpenedConnections() {
   return <div>Conexões abertas: {databaseOpenedConnectionsText}</div>;
 }
 
-function DatabaseMaxConnections() {
-  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
-    refreshInterval: 2000,
-  });
-
+function DatabaseMaxConnections({ isLoading, data }) {
   const databaseMaxConnectionsText = isLoading
     ? "Carregando..."
     : data.dependencies.database.max_connections;
