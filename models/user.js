@@ -1,12 +1,35 @@
 import database from "infra/database.js";
 import { ValidationError, NotFoundError } from "infra/errors.js";
+import password from "models/password.js";
 
 async function create(userInputValues) {
-  await validateUniqueEmail(userInputValues.email);
   await validateUniqueUsername(userInputValues.username);
+  await validateUniqueEmail(userInputValues.email);
+  await hashPasswordInObject(userInputValues);
 
   const newUser = await runInsertQuery(userInputValues);
   return newUser;
+
+  async function validateUniqueUsername(username) {
+    const result = await database.query({
+      text: `
+        SELECT
+          username
+        FROM
+          users
+        WHERE
+          lower(username) = lower($1)
+      ;`,
+      values: [username],
+    });
+
+    if (result.rowCount > 0) {
+      throw new ValidationError({
+        message: "O apelido informado já está sendo utilizado.",
+        action: "Utilize outro apelido para realizar o cadastro.",
+      });
+    }
+  }
 
   async function validateUniqueEmail(email) {
     const result = await database.query({
@@ -29,25 +52,9 @@ async function create(userInputValues) {
     }
   }
 
-  async function validateUniqueUsername(username) {
-    const result = await database.query({
-      text: `
-        SELECT
-          username
-        FROM
-          users
-        WHERE
-          lower(username) = lower($1)
-      ;`,
-      values: [username],
-    });
-
-    if (result.rowCount > 0) {
-      throw new ValidationError({
-        message: "O apelido informado já está sendo utilizado.",
-        action: "Utilize outro apelido para realizar o cadastro.",
-      });
-    }
+  async function hashPasswordInObject(userInputValues) {
+    const hashedPassword = await password.hash(userInputValues.password);
+    userInputValues.password = hashedPassword;
   }
 
   async function runInsertQuery(userInputValues) {
