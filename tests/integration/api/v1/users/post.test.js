@@ -2,6 +2,7 @@ import { version as uuidVersion } from "uuid";
 import orchestrator from "tests/orchestrator.js";
 import user from "models/user.js";
 import password from "models/password.js";
+import { faker } from "@faker-js/faker";
 
 beforeAll(async () => {
   await orchestrator.waitForAllServices();
@@ -20,7 +21,7 @@ describe("POST /api/v1/users", () => {
         body: JSON.stringify({
           username: "luangregati",
           email: "luan.luiz.msn@hotmail.com",
-          password: "senha123",
+          password: "validpassword",
         }),
       });
 
@@ -44,12 +45,12 @@ describe("POST /api/v1/users", () => {
       const userInDatabase = await user.findOneByUsername("luangregati");
 
       const correctPasswordMatch = await password.compare(
-        "senha123",
+        "validpassword",
         userInDatabase.password,
       );
 
       const incorrectPasswordMatch = await password.compare(
-        "senhaerrada",
+        "invalidpassword",
         userInDatabase.password,
       );
 
@@ -57,37 +58,27 @@ describe("POST /api/v1/users", () => {
       expect(!incorrectPasswordMatch).toBe(true);
     });
     test("With duplicated 'email'", async () => {
-      const response1 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "emailduplicado1",
-          email: "duplicado@teste.com",
-          password: "senha123",
-        }),
+      await orchestrator.createUser({
+        email: "duplicado@teste.com",
       });
 
-      expect(response1.status).toBe(201);
-
-      const response2 = await fetch("http://localhost:3000/api/v1/users", {
+      const response = await fetch("http://localhost:3000/api/v1/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: "emailduplicado2",
+          username: faker.internet.username().replace(/[_.-]/g, ""),
           email: "Duplicado@teste.com",
-          password: "senha123",
+          password: "validpassword",
         }),
       });
 
-      expect(response2.status).toBe(400);
+      expect(response.status).toBe(400);
 
-      const response2Body = await response2.json();
+      const responseBody = await response.json();
 
-      expect(response2Body).toEqual({
+      expect(responseBody).toEqual({
         name: "ValidationError",
         message: "O email informado já está sendo utilizado.",
         action: "Utilize outro email para realizar esta operação.",
@@ -95,37 +86,27 @@ describe("POST /api/v1/users", () => {
       });
     });
     test("With duplicated 'username'", async () => {
-      const response1 = await fetch("http://localhost:3000/api/v1/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: "usernameduplicado",
-          email: "usernameduplicado1@teste.com",
-          password: "senha123",
-        }),
+      await orchestrator.createUser({
+        username: "usernameduplicado",
       });
 
-      expect(response1.status).toBe(201);
-
-      const response2 = await fetch("http://localhost:3000/api/v1/users", {
+      const response = await fetch("http://localhost:3000/api/v1/users", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           username: "UsernameDuplicado",
-          email: "usernameduplicado2@teste.com",
-          password: "senha123",
+          email: faker.internet.email(),
+          password: "validpassword",
         }),
       });
 
-      expect(response2.status).toBe(400);
+      expect(response.status).toBe(400);
 
-      const response2Body = await response2.json();
+      const responseBody = await response.json();
 
-      expect(response2Body).toEqual({
+      expect(responseBody).toEqual({
         name: "ValidationError",
         message: "O username informado já está sendo utilizado.",
         action: "Utilize outro apelido para realizar esta operação.",
