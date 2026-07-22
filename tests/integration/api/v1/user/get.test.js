@@ -34,7 +34,7 @@ describe("GET /api/v1/user", () => {
 
       const activatedUser = await orchestrator.activateUser(createdUser);
 
-      const sessionObject = await orchestrator.createSession(createdUser.id);
+      const sessionObject = await orchestrator.createSession(createdUser);
 
       const response = await fetch("http://localhost:3000/api/v1/user", {
         headers: {
@@ -90,7 +90,7 @@ describe("GET /api/v1/user", () => {
         httpOnly: true,
       });
     });
-    test("With nonexistent token", async () => {
+    test("With nonexistent session token", async () => {
       const nonexistentToken =
         "5e17fee6600bb8fbe8d9adeb126002799d0783395f01d828fe5ed690c4f682541c8c869c05ba146178608f12a64e0178";
 
@@ -133,7 +133,7 @@ describe("GET /api/v1/user", () => {
         username: "UserWithExpiredSession",
       });
 
-      const sessionObject = await orchestrator.createSession(createdUser.id);
+      const sessionObject = await orchestrator.createSession(createdUser);
 
       jest.useRealTimers();
 
@@ -178,7 +178,7 @@ describe("GET /api/v1/user", () => {
 
       const activatedUser = await orchestrator.activateUser(createdUser);
 
-      const sessionObject = await orchestrator.createSession(createdUser.id);
+      const sessionObject = await orchestrator.createSession(createdUser);
 
       jest.useRealTimers();
 

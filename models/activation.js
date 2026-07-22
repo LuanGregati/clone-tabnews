@@ -2,7 +2,8 @@ import email from "infra/email.js";
 import database from "infra/database.js";
 import webserver from "infra/webserver.js";
 import user from "models/user.js";
-import { NotFoundError } from "infra/errors.js";
+import authorization from "models/authorization.js";
+import { ForbiddenError, NotFoundError } from "infra/errors.js";
 
 const EXPIRATION_IN_MILLISECONDS = 60 * 15 * 1000; // 15 minutes
 
@@ -87,10 +88,20 @@ async function markTokenAsUsed(activationTokenId) {
 }
 
 async function activateUserByUserId(userId) {
+  const userToActivate = await user.findOneById(userId);
+
+  if (!authorization.can(userToActivate, "read:activation_token")) {
+    throw new ForbiddenError({
+      message: "Você não pode mais utilizar tokens de ativação",
+      action: "Contate o suporte caso você acredite que isto seja um erro.",
+    });
+  }
+
   const activatedUser = await user.setFeatures(userId, [
     "create:session",
     "read:session",
   ]);
+
   return activatedUser;
 }
 
@@ -109,6 +120,7 @@ Equipe TabGames`,
 }
 
 const activation = {
+  EXPIRATION_IN_MILLISECONDS,
   create,
   findOneValidById,
   markTokenAsUsed,
