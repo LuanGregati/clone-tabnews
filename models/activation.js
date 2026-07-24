@@ -107,7 +107,7 @@ async function activateUserByUserId(userId) {
 
 async function sendEmailToUser(user, activationToken) {
   await email.send({
-    from: "TabGames <contato@tabgames.com.br>",
+    from: "TabGames <contato@tabgames.blog.br>",
     to: user.email,
     subject: "Ative seu cadastro no TabGames!",
     text: `${user.username}, clique no link abaixo para ativar seu cadastro no TabGames:

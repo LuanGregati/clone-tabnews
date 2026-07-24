@@ -25,7 +25,7 @@ describe("Use case: Registration Flow (all successful)", () => {
         },
         body: JSON.stringify({
           username: "RegistrationFlow",
-          email: "registration.flow@tabgmes.com",
+          email: "registration.flow@tabgames.blog.br",
           password: "RegistrationFlowPassword",
         }),
       },
@@ -38,7 +38,7 @@ describe("Use case: Registration Flow (all successful)", () => {
     expect(createUserResponseBody).toEqual({
       id: createUserResponseBody.id,
       username: "RegistrationFlow",
-      email: "registration.flow@tabgmes.com",
+      email: "registration.flow@tabgames.blog.br",
       password: createUserResponseBody.password,
       features: ["read:activation_token"],
       created_at: createUserResponseBody.created_at,
@@ -48,8 +48,10 @@ describe("Use case: Registration Flow (all successful)", () => {
   test("Receive activation email", async () => {
     const lastEmail = await orchestrator.getLastEmail();
 
-    expect(lastEmail.sender).toBe("<contato@tabgames.com.br>");
-    expect(lastEmail.recipients[0]).toBe("<registration.flow@tabgmes.com>");
+    expect(lastEmail.sender).toBe("<contato@tabgames.blog.br>");
+    expect(lastEmail.recipients[0]).toBe(
+      "<registration.flow@tabgames.blog.br>",
+    );
     expect(lastEmail.subject).toBe("Ative seu cadastro no TabGames!");
     expect(lastEmail.text).toContain("RegistrationFlow");
 
@@ -90,7 +92,7 @@ describe("Use case: Registration Flow (all successful)", () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: "registration.flow@tabgmes.com",
+          email: "registration.flow@tabgames.blog.br",
           password: "RegistrationFlowPassword",
         }),
       },
