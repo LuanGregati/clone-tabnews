@@ -10,7 +10,7 @@ function can(user, feature, resource) {
 
     const targetUser = resource;
 
-    if (user.id === targetUser.id) {
+    if (user.id === targetUser.id || can(user, "update:user:others")) {
       authorized = true;
     }
   }

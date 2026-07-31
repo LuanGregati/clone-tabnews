@@ -329,29 +329,33 @@ describe("PATCH /api/v1/users/[username]", () => {
 
       expect(responseBody.updated_at > responseBody.created_at).toBe(true);
     });
-    test("With 'userB' targeting 'userA'", async () => {
+    test("With 'actingUser' targeting 'targetUser'", async () => {
       await orchestrator.createUser({
-        username: "userA",
+        username: "targetUser",
       });
 
-      const createdUserB = await orchestrator.createUser({
-        username: "userB",
+      const createdActingUser = await orchestrator.createUser({
+        username: "actingUser",
       });
 
-      const activatedUserB = await orchestrator.activateUser(createdUserB);
-      const sessionObjectUserB =
-        await orchestrator.createSession(activatedUserB);
+      const activatedActingUser =
+        await orchestrator.activateUser(createdActingUser);
+      const ActingUserSessionObject =
+        await orchestrator.createSession(activatedActingUser);
 
-      const response = await fetch("http://localhost:3000/api/v1/users/userA", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Cookie: `session_id=${sessionObjectUserB.token}`,
+      const response = await fetch(
+        "http://localhost:3000/api/v1/users/targetUser",
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `session_id=${ActingUserSessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: "targetUserUpdated",
+          }),
         },
-        body: JSON.stringify({
-          username: "userC",
-        }),
-      });
+      );
 
       expect(response.status).toBe(403);
 
@@ -364,6 +368,60 @@ describe("PATCH /api/v1/users/[username]", () => {
           "Verifique se você possui a feature necessária para atualizar outro usuário.",
         status_code: 403,
       });
+    });
+  });
+
+  describe("Privileged user", () => {
+    test("With `update:user:others` targeting 'defaultUser'", async () => {
+      const privilegedUser = await orchestrator.createUser();
+
+      const activatedPrivilegedUser =
+        await orchestrator.activateUser(privilegedUser);
+
+      await orchestrator.addFeaturesToUser(privilegedUser, [
+        "update:user:others",
+      ]);
+
+      const privilegedUserSessionObject = await orchestrator.createSession(
+        activatedPrivilegedUser,
+      );
+
+      const defaultUser = await orchestrator.createUser();
+
+      const response = await fetch(
+        `http://localhost:3000/api/v1/users/${defaultUser.username}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Cookie: `session_id=${privilegedUserSessionObject.token}`,
+          },
+          body: JSON.stringify({
+            username: "defaultUserUpdated",
+          }),
+        },
+      );
+
+      expect(response.status).toBe(200);
+
+      const responseBody = await response.json();
+
+      expect(responseBody).toEqual({
+        id: defaultUser.id,
+        username: "defaultUserUpdated",
+        email: defaultUser.email,
+        password: responseBody.password,
+        features: defaultUser.features,
+        created_at: responseBody.created_at,
+        updated_at: responseBody.updated_at,
+      });
+
+      expect(uuidVersion(responseBody.id)).toBe(4);
+
+      expect(Date.parse(responseBody.created_at)).not.toBeNaN();
+      expect(Date.parse(responseBody.updated_at)).not.toBeNaN();
+
+      expect(responseBody.updated_at > responseBody.created_at).toBe(true);
     });
   });
 });

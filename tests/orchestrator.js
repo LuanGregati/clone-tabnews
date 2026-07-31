@@ -66,6 +66,11 @@ async function activateUser(inactiveUser) {
   return await activation.activateUserByUserId(inactiveUser.id);
 }
 
+async function addFeaturesToUser(userObject, features) {
+  const updatedUser = await user.addFeatures(userObject.id, features);
+  return updatedUser;
+}
+
 async function createSession(userNotLoggedIn) {
   return await session.create(userNotLoggedIn.id);
 }
@@ -107,6 +112,7 @@ const orchestrator = {
   runPendingMigrations,
   createUser,
   activateUser,
+  addFeaturesToUser,
   createSession,
   deleteAllEmails,
   getLastEmail,
