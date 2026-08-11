@@ -44,7 +44,7 @@ function DatabaseVersion({ isLoading, data }) {
     ? "Carregando..."
     : data.dependencies.database.version;
 
-  return <div>Versão do Postgres: {databaseVersionText}</div>;
+  return <div>Versão: {databaseVersionText}</div>;
 }
 
 function DatabaseOpenedConnections({ isLoading, data }) {
