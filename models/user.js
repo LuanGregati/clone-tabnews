@@ -170,8 +170,8 @@ async function findOneByEmail(email) {
 
     if (result.rowCount === 0) {
       throw new NotFoundError({
-        message: "O email informado não foi encontrado no sistema.",
-        action: "Verifique se o email está digitado corretamente.",
+        message: "O e-mail informado não foi encontrado no sistema.",
+        action: "Verifique se o e-mail está digitado corretamente.",
       });
     }
 
@@ -263,8 +263,8 @@ async function validateUniqueEmail(email) {
 
   if (result.rowCount > 0) {
     throw new ValidationError({
-      message: "O email informado já está sendo utilizado.",
-      action: "Utilize outro email para realizar esta operação.",
+      message: "O e-mail informado já está sendo utilizado.",
+      action: "Utilize outro e-mail para realizar esta operação.",
     });
   }
 }

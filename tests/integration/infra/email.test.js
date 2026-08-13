@@ -19,15 +19,15 @@ describe("infra/email", () => {
     await email.send({
       from: "TabGames <contato@tabgames.blog.br>",
       to: "contato@curso.dev",
-      subject: "Último email enviado",
-      text: "Corpo do último email.",
+      subject: "Último e-mail enviado",
+      text: "Corpo do último e-mail.",
     });
 
     const lastEmail = await orchestrator.getLastEmail();
 
     expect(lastEmail.sender).toBe("<contato@tabgames.blog.br>");
     expect(lastEmail.recipients[0]).toBe("<contato@curso.dev>");
-    expect(lastEmail.subject).toBe("Último email enviado");
-    expect(lastEmail.text).toBe("Corpo do último email.\r\n");
+    expect(lastEmail.subject).toBe("Último e-mail enviado");
+    expect(lastEmail.text).toBe("Corpo do último e-mail.\r\n");
   });
 });
