@@ -1,11 +1,14 @@
 import * as cookie from "cookie";
 import session from "models/session.js";
+import user from "models/user.js";
+import authorization from "models/authorization.js";
 import {
   MethodNotAllowedError,
   InternalServerError,
   ValidationError,
   NotFoundError,
   UnauthorizedError,
+  ForbiddenError,
 } from "./errors.js";
 
 function onNoMatchHandler(_, response) {
@@ -14,7 +17,11 @@ function onNoMatchHandler(_, response) {
 }
 
 function onErrorHandler(error, _, response) {
-  if (error instanceof ValidationError || error instanceof NotFoundError) {
+  if (
+    error instanceof ValidationError ||
+    error instanceof NotFoundError ||
+    error instanceof ForbiddenError
+  ) {
     return response.status(error.statusCode).json(error);
   }
 
@@ -55,6 +62,56 @@ function clearSessionCookie(response) {
   response.setHeader("Set-Cookie", setCookie);
 }
 
+async function injectAnonymousOrUser(request, _, next) {
+  if (request.cookies?.session_id) {
+    await injectAuthenticatedUser(request);
+  } else {
+    injectAnonymousUser(request);
+  }
+
+  return next();
+
+  async function injectAuthenticatedUser(request) {
+    const sessionToken = request.cookies.session_id;
+    const sessionObject = await session.findOneValidByToken(sessionToken);
+
+    const userObject = await user.findOneById(sessionObject.user_id);
+
+    request.context = {
+      ...request.context,
+      user: userObject,
+    };
+  }
+
+  function injectAnonymousUser(request) {
+    const anonymousUserObject = {
+      features: ["read:activation_token", "create:session", "create:user"],
+    };
+
+    request.context = {
+      ...request.context,
+      user: anonymousUserObject,
+    };
+  }
+}
+
+function canRequest(feature) {
+  function canRequestMiddleware(request, _, next) {
+    const userTryingToRequest = request.context.user;
+
+    if (authorization.can(userTryingToRequest, feature)) {
+      return next();
+    }
+
+    throw new ForbiddenError({
+      message: "Você não possui permissão para executar esta ação.",
+      action: `Verifique se o seu usuário possui a feature "${feature}"`,
+    });
+  }
+
+  return canRequestMiddleware;
+}
+
 const controller = {
   errorHandlers: {
     onNoMatch: onNoMatchHandler,
@@ -62,6 +119,8 @@ const controller = {
   },
   setSessionCookie,
   clearSessionCookie,
+  injectAnonymousOrUser,
+  canRequest,
 };
 
 export default controller;

@@ -6,17 +6,22 @@ async function create(userInputValues) {
   await validateUniqueUsername(userInputValues.username);
   await validateUniqueEmail(userInputValues.email);
   await hashPasswordInObject(userInputValues);
+  injectDefaultFeaturesInObject(userInputValues);
 
   const newUser = await runInsertQuery(userInputValues);
   return newUser;
+
+  function injectDefaultFeaturesInObject(userInputValues) {
+    userInputValues.features = ["read:activation_token"];
+  }
 
   async function runInsertQuery(userInputValues) {
     const newUser = await database.query({
       text: `
         INSERT INTO users
-          (username, email, password) 
+          (username, email, password, features) 
         VALUES 
-          ($1, $2, $3) 
+          ($1, $2, $3, $4) 
         RETURNING 
           *
       ;`,
@@ -24,6 +29,7 @@ async function create(userInputValues) {
         userInputValues.username,
         userInputValues.email,
         userInputValues.password,
+        userInputValues.features,
       ],
     });
 
@@ -164,10 +170,58 @@ async function findOneByEmail(email) {
 
     if (result.rowCount === 0) {
       throw new NotFoundError({
-        message: "O email informado não foi encontrado no sistema.",
-        action: "Verifique se o email está digitado corretamente.",
+        message: "O e-mail informado não foi encontrado no sistema.",
+        action: "Verifique se o e-mail está digitado corretamente.",
       });
     }
+
+    return result.rows[0];
+  }
+}
+
+async function setFeatures(userId, features) {
+  const updatedUser = await runUpdateQuery(userId, features);
+  return updatedUser;
+
+  async function runUpdateQuery(userId, features) {
+    const result = await database.query({
+      text: `
+        UPDATE
+          users
+        SET
+          features = $2,
+          updated_at = timezone('utc', now())
+        WHERE
+          id = $1
+        RETURNING
+          *
+      ;`,
+      values: [userId, features],
+    });
+
+    return result.rows[0];
+  }
+}
+
+async function addFeatures(userId, features) {
+  const updatedUser = await runUpdateQuery(userId, features);
+  return updatedUser;
+
+  async function runUpdateQuery(userId, features) {
+    const result = await database.query({
+      text: `
+        UPDATE
+          users
+        SET
+          features = array_cat(features, $2),
+          updated_at = timezone('utc', now())
+        WHERE
+          id = $1
+        RETURNING
+          *
+      ;`,
+      values: [userId, features],
+    });
 
     return result.rows[0];
   }
@@ -209,8 +263,8 @@ async function validateUniqueEmail(email) {
 
   if (result.rowCount > 0) {
     throw new ValidationError({
-      message: "O email informado já está sendo utilizado.",
-      action: "Utilize outro email para realizar esta operação.",
+      message: "O e-mail informado já está sendo utilizado.",
+      action: "Utilize outro e-mail para realizar esta operação.",
     });
   }
 }
@@ -226,6 +280,8 @@ const user = {
   findOneById,
   findOneByUsername,
   findOneByEmail,
+  setFeatures,
+  addFeatures,
 };
 
 export default user;
