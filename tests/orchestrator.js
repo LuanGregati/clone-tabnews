@@ -72,8 +72,8 @@ async function addFeaturesToUser(userObject, features) {
   return updatedUser;
 }
 
-async function createSession(userNotLoggedIn) {
-  return await session.create(userNotLoggedIn.id);
+async function createSession(userObject) {
+  return await session.create(userObject.id);
 }
 
 async function deleteAllEmails() {
