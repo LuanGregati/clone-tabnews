@@ -1,29 +1,7 @@
 import useSWR from "swr";
-
-export default function StatusPage() {
-  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
-    refreshInterval: 2000,
-  });
-
-  return (
-    <>
-      <h1>Status</h1>
-      <UpdatedAt isLoading={isLoading} data={data} />
-      <h2>Banco de dados</h2>
-      <ul>
-        <li>
-          <DatabaseVersion isLoading={isLoading} data={data} />
-        </li>
-        <li>
-          <DatabaseOpenedConnections isLoading={isLoading} data={data} />
-        </li>
-        <li>
-          <DatabaseMaxConnections isLoading={isLoading} data={data} />
-        </li>
-      </ul>
-    </>
-  );
-}
+import DefaultLayout from "interface/DefaultLayout";
+import { Banner, Heading, Stack } from "@primer/react";
+import { Card } from "@primer/react/experimental";
 
 async function fetchAPI(key) {
   const response = await fetch(key);
@@ -31,34 +9,78 @@ async function fetchAPI(key) {
   return responseBody;
 }
 
-function UpdatedAt({ isLoading, data }) {
-  const UpdatedAtText = isLoading
-    ? "Carregando..."
-    : new Date(data.updated_at).toLocaleString("pt-BR");
-
-  return <div>Última atualização: {UpdatedAtText}</div>;
+export default function StatusPage() {
+  return (
+    <DefaultLayout contentWidth="medium" metadata={{ title: "Status" }}>
+      <Stack gap="spatious">
+        <Heading as="h1">Status</Heading>
+        <DatabaseStatus />
+        <UpdatedAt />
+      </Stack>
+    </DefaultLayout>
+  );
 }
 
-function DatabaseVersion({ isLoading, data }) {
-  const databaseVersionText = isLoading
-    ? "Carregando..."
-    : data.dependencies.database.version;
+function UpdatedAt() {
+  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
+    refreshInterval: 2000,
+  });
 
-  return <div>Versão: {databaseVersionText}</div>;
+  let updatedAtText = "Carregando...";
+
+  if (!isLoading && data) {
+    updatedAtText = new Date(data.updated_at).toLocaleString("pt-BR");
+  }
+
+  return (
+    <Banner variant="info" layout="compact">
+      <Banner.Title>Última atualização: {updatedAtText}</Banner.Title>
+    </Banner>
+  );
 }
 
-function DatabaseOpenedConnections({ isLoading, data }) {
-  const databaseOpenedConnectionsText = isLoading
-    ? "Carregando..."
-    : data.dependencies.database.opened_connections;
+function DatabaseStatus() {
+  const { isLoading, data } = useSWR("/api/v1/status", fetchAPI, {
+    refreshInterval: 2000,
+  });
 
-  return <div>Conexões abertas: {databaseOpenedConnectionsText}</div>;
-}
+  if (isLoading || !data) {
+    return;
+  }
 
-function DatabaseMaxConnections({ isLoading, data }) {
-  const databaseMaxConnectionsText = isLoading
-    ? "Carregando..."
-    : data.dependencies.database.max_connections;
+  const database = data.dependencies.database;
+  const openedConnections = database.opened_connections;
+  const maxConnections = database.max_connections;
+  const version = database.version ?? "-";
 
-  return <div>Conexões máximas: {databaseMaxConnectionsText}</div>;
+  return (
+    <Stack>
+      <Heading as="h2" variant="medium">
+        Banco de dados
+      </Heading>
+      <Stack direction={{ narrow: "vertical", regular: "horizontal" }}>
+        <Stack.Item grow>
+          <Card>
+            <Card.Heading>Conexões abertas</Card.Heading>
+            <Card.Description>{openedConnections}</Card.Description>
+            <Card.Metadata>Em uso neste momento.</Card.Metadata>
+          </Card>
+        </Stack.Item>
+        <Stack.Item grow>
+          <Card>
+            <Card.Heading>Conexões máximas</Card.Heading>
+            <Card.Description>{maxConnections}</Card.Description>
+            <Card.Metadata>Conexões disponíveis.</Card.Metadata>
+          </Card>
+        </Stack.Item>
+        <Stack.Item grow>
+          <Card>
+            <Card.Heading>PostgreSQL</Card.Heading>
+            <Card.Description>{version}</Card.Description>
+            <Card.Metadata>Versão em execução.</Card.Metadata>
+          </Card>
+        </Stack.Item>
+      </Stack>
+    </Stack>
+  );
 }
